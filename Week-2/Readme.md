@@ -134,6 +134,7 @@ Suppose we have parallel delete operations on nodes B, C, and E by threads T1, T
 * T1: DELETE B
 * T2: DELETE C
 * T3: DELETE E
+  
 We can put these delete operations in an ISOLATED construct to ensure mutual exclusion, preventing potential issues with shared variables.
 
 ### Object-Based Isolation
@@ -177,11 +178,6 @@ This allows deletions of B and E to happen in parallel because they have no comm
 ### Connection with Monitors 
 
 A monitor is a mechanism for controlling concurrent access to an object. In Java, it is implemented using the `synchronized` keyword and is associated with every Java object.
-
-
-```markdown
-
-### Usage Example:
 
 ```java
 // Thread 1

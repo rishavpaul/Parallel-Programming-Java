@@ -185,3 +185,158 @@ class SharedResource {
         }
     }
 }
+```
+
+## Liveness in Concurrent Programming
+
+In concurrent programming, ensuring **liveness** is a fundamental correctness property. Liveness refers to the property that a program continues to make progress, eventually reaching a desired state. However, several issues can arise in concurrent programs that violate liveness, including **deadlock**, **livelock**, and **starvation**.
+
+### 1. Deadlock:
+
+Deadlock occurs when two or more threads are blocked on each other, leading to a situation where none of the threads can make progress.
+
+*Example:* If thread T1 locks resource A and waits for resource B, while thread T2 locks resource B and waits for resource A, a deadlock can occur.
+
+```java
+class DeadlockExample {
+    private final Object resourceA = new Object();
+    private final Object resourceB = new Object();
+
+    public void thread1() {
+        synchronized (resourceA) {
+            // Critical section with resourceA
+            synchronized (resourceB) {
+                // Critical section with resourceB
+            }
+        }
+    }
+
+    public void thread2() {
+        synchronized (resourceB) {
+            // Critical section with resourceB
+            synchronized (resourceA) {
+                // Critical section with resourceA
+            }
+        }
+    }
+}
+```
+
+### 2. Livelock:
+
+Livelock is a situation where threads are not blocked, but they are in a state where they are not making progress, similar to a stalemate in a game of chess.
+
+*Example:* Two threads, T1 and T2, continuously modify a shared variable in a way that counters each other's progress, leading to an infinite cycle of actions without reaching a stable state.
+
+```java
+class LivelockExample {
+    private final Object sharedVariableLock = new Object();
+    private int sharedVariable = 0;
+
+    public void thread1() {
+        while (sharedVariable < 2) {
+            synchronized (sharedVariableLock) {
+                sharedVariable++;
+            }
+            // Some other processing
+        }
+    }
+
+    public void thread2() {
+        while (sharedVariable > -2) {
+            synchronized (sharedVariableLock) {
+                sharedVariable--;
+            }
+            // Some other processing
+        }
+    }
+}
+```
+
+### 3. Starvation:
+
+Starvation happens when a thread is continually denied access to a resource it needs, preventing it from making progress.
+
+*Example:* In a scenario with multiple threads reading from different sockets, one thread (e.g., T100) might starve if other threads continuously execute and monopolize the processing resources.
+
+
+## Dining Philosophers Problem: Livelock and Deadlock Illustration
+
+In the context of the Dining Philosophers problem, we explore the challenges of modeling concurrent behavior using threads and locks, specifically addressing livelock and deadlock scenarios.
+
+### Problem Scenario
+
+Consider five philosophers (A, B, C, D, E) sitting around a roundtable with five chopsticks placed between them. The philosophers alternate between thinking and eating. To eat, a philosopher needs to pick up both the left and right chopsticks, and after eating, they put the chopsticks back.
+
+### Structured Locks
+
+Structured locks, implemented using synchronized blocks, are initially considered for coordination. Each philosopher, represented as a thread, goes through a loop of thinking, picking up the left chopstick, picking up the right chopstick, eating, and repeating.
+
+```java
+// Structured Locks Example
+while (true) {
+    think();
+    synchronized (leftChopstick) {
+        synchronized (rightChopstick) {
+            eat();
+        }
+    }
+}
+```
+
+This approach, while ensuring synchronization, introduces the possibility of deadlock if all philosophers attempt to pick up their left chopstick simultaneously.
+
+### Unstructured Locks (TRYLOCK)
+
+To address potential deadlock, unstructured locks with TRYLOCK are introduced. The loop involves attempting to acquire the left chopstick with TRYLOCK, checking success, then attempting to acquire the right chopstick. The left lock must be released if the right lock acquisition fails.
+
+```java
+// Unstructured Locks Example with TRYLOCK
+while (true) {
+    think();
+    boolean leftSuccess = tryLock(leftChopstick);
+    if (!leftSuccess) {
+        continue;
+    }
+    boolean rightSuccess = tryLock(rightChopstick);
+    if (!rightSuccess) {
+        unlock(leftChopstick); // Release left chopstick on failure
+        continue;
+    }
+    eat();
+    unlock(leftChopstick);
+    unlock(rightChopstick);
+}
+
+```
+
+This approach eliminates deadlock but introduces the possibility of livelock, where philosophers endlessly contend for chopsticks without making progress.
+
+### Livelock vs Deadlock
+With structured locks, the risk is primarily deadlock, where philosophers can be indefinitely blocked on each other. Unstructured locks with TRYLOCK avoid deadlock but may result in livelock, where philosophers continuously retry acquiring chopsticks without progressing to eating.
+
+### Algorithm Modification
+To address livelock, the algorithm is modified. For example, philosopher E could pick up the right chopstick first and then the left, breaking the potential continuous retry scenario. Such modifications can avoid both livelock and deadlock.
+
+```java
+while (true) {
+    think();
+
+    if (philosopher == E) {
+        tryLock(rightChopstick);
+        tryLock(leftChopstick);
+    } else {
+        tryLock(leftChopstick);
+        tryLock(rightChopstick);
+    }
+
+    eat();
+
+    unlock(leftChopstick);
+    unlock(rightChopstick);
+}
+
+```
+### Starvation Challenge
+While modifications address livelock and deadlock, challenges like starvation (some philosophers not getting a chance to eat) remain. Advanced synchronization primitives, such as semaphores, are required for more complex problem-solving in operating systems.
+

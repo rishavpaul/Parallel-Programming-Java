@@ -23,6 +23,7 @@ class SharedBuffer {
     private int data;
     private boolean dataAvailable = false;
 
+    // Producer adds data to the buffer
     public synchronized void produce(int value) {
         while (dataAvailable) {
             try {
@@ -37,10 +38,22 @@ class SharedBuffer {
         notify(); // Notify consumer that data is available
     }
 
+    // Consumer retrieves data from the buffer
     public synchronized int consume() {
         while (!dataAvailable) {
             try {
                 wait(); // Wait if data is not available
-            } catch (InterruptedException e)
+            } catch (InterruptedException e) {
+                // Handle interruption
+            }
+        }
+        int consumedData = data;
+        dataAvailable = false;
+        System.out.println("Consumed: " + consumedData);
+        notify(); // Notify producer that buffer is empty
+        return consumedData;
+    }
+}
+
 
 ```

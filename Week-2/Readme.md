@@ -131,15 +131,16 @@ DELETE current {
 ### Parallel Deletions
 Suppose we have parallel delete operations on nodes B, C, and E by threads T1, T2, and T3.
 
-T1: DELETE B
-T2: DELETE C
-T3: DELETE E
+* T1: DELETE B
+* T2: DELETE C
+* T3: DELETE E
 We can put these delete operations in an ISOLATED construct to ensure mutual exclusion, preventing potential issues with shared variables.
 
 ### Object-Based Isolation
 Object-based isolation extends isolated by listing the objects involved in the isolated region. For example:
 
 For DELETE(B): A, B, C
+
 For DELETE(E): D, E, F
 
 The fundamental rule of object-based isolation states that if two isolated constructs have an empty intersection, they can proceed in parallel. Otherwise, they must be executed in mutual exclusion.

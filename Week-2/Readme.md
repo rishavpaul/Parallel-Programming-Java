@@ -146,35 +146,12 @@ For DELETE(E): D, E, F
 
 The fundamental rule of object-based isolation states that if two isolated constructs have an empty intersection, they can proceed in parallel. Otherwise, they must be executed in mutual exclusion.
 
+This allows deletions of B and E to happen in parallel because they have no common elements. However, implementing this capability can be very challenging with locks because a correct implementation must enforce the correct levels of mutual exclusion without entering into deadlock or livelock states.
 ```java
-    public synchronized void deleteNode(Node node) {
-        // Object-Based Isolation
-        if (!isolationSet.isEmpty() && isolationSet.contains(node)) {
-            // Ensure mutual exclusion for shared objects
-            return;
-        }
-
-        isolationSet.add(node);
-
-        // Perform delete operation on the node
-        if (node.prev != null) {
-            node.prev.next = node.next;
-        } else {
-            // If it's the head node, update the head
-            head = node.next;
-        }
-
-        if (node.next != null) {
-            node.next.prev = node.prev;
-        }
-
-        // Remove the node from the isolation set after the operation
-        isolationSet.remove(node);
-    }
+isolated(cur, cur.prev, cur.next, () -> {
+    . . . // Body of object-based isolated construct
+});
 ```
-
-This allows deletions of B and E to happen in parallel because they have no common elements.
-
 ### Connection with Monitors 
 
 A monitor is a mechanism for controlling concurrent access to an object. In Java, it is implemented using the `synchronized` keyword and is associated with every Java object.

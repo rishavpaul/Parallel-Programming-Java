@@ -363,6 +363,8 @@ public class Main {
 
 ## Read, Write Isolation
 
+Read-Write Isolation, which is a refinement of object-based isolation, is a higher-level abstraction of the read-write locks studied earlier as part of Unstructured Locks. The main idea behind read-write isolation is to separate read accesses to shared objects from write accesses. This approach enables two threads that only read shared objects to freely execute in parallel since they are not modifying any shared objects. The need for mutual exclusion only arises when one or more threads attempt to enter an isolated section with write access to a shared object. 
+
 Say you have a Map, and multiple threads want to read and write to the hash map.
 
 1. **Basic Concurrent Collection Operations:**
@@ -416,15 +418,19 @@ This gives us much higher concurrency.
 
 4. **Further Refinement with Read-Write Isolation:**
 
-In our Doubly LL example, we had:
+In the doubly-linked list example previously, when deleting an object cur from the list by calling delete(cur), we can replace object-based isolation on cur with read-only isolation, since deleting an object does not modify the object being deleted; only the previous and next objects in the list need to be modified.
 
-```
+```java
 deleteNode(cur) {
     isolated(cur, cur.prev, cur.next, () -> {
         . . . // Body of object-based isolated construct
     });
 }
-```
-Note that, in this case, no write operations are being performed on `cur`. Therefore, `cur` can run with Read isolation to increase concurrency.
 
-This Java code showcases the use of `synchronized` blocks to achieve object-based isolation and further refinement with read-write isolation, ensuring correct concurrent access to collections and maintaining data integrity.
+deleteNode(cur) {
+    isolated(read(cur), write(cur.prev, cur.next), () -> {
+        . . . // Body of object-based isolated construct
+    });
+}
+```
+

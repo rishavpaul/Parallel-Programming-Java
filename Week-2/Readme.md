@@ -438,6 +438,7 @@ deleteNode(cur) {
 ## Isolated Implementation in Java
 
 Sample implementation only for representation!
+Source: https://www.coursera.org/learn/concurrent-programming-in-java/supplement/4ULtn/mini-project-2-global-and-object-based-isolation
 
 ```java
     public static void isolated(Object obj1, Object obj2, Runnable runnable) {
@@ -492,6 +493,20 @@ Sample implementation only for representation!
         }
 
         return sorted;
+    }
+
+    public void acquireAllLocks() {
+        for(int i = 0; i < this.locks.length; ++i) {
+            this.locks[i].lock();
+        }
+
+    }
+
+    public void releaseAllLocks() {
+        for(int i = this.locks.length - 1; i >= 0; --i) {
+            this.locks[i].unlock();
+        }
+
     }
 ```
 

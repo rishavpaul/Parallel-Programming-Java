@@ -182,3 +182,183 @@ This ensures that Threads 1 and 2 cannot access the synchronized section at the 
 - Monitors are applied at the object level, not at the method level.
 - It's crucial for managing shared resources and preventing race conditions in multithreaded environments.
 ```
+
+### Concurrent Spanning Tree Algorithm
+
+```java
+void Compute(Node v) {
+    for (Node c : v.neighbors) {
+        async Compute(c); // Execute in parallel
+    }
+}
+
+boolean MakeParent(Node v, Node c) {
+    boolean success;
+    Isolated(c) {
+        if (c.parent == null) {
+            c.parent = v;
+            success = true;
+        } else {
+            success = false;
+        }
+    }
+    return success;
+}
+```
+
+The `isolated` construct is a higher-level synchronization primitive, and its implementation can vary based on the programming language and the underlying concurrency mechanisms available. The primary goal of `isolated` is to ensure that a block of code is executed in mutual exclusion with respect to other isolated sections involving the same shared objects. 
+
+The code allows different threads to explore different branches of the tree in parallel. Object-based isolation ensures that when two vertices try to become the parent of the same child, it happens in mutual exclusion.
+
+## Implementation of Object Based Isolation
+
+We have seen that the concept of isolation and object-based isolation can be really convenient in expressing concurrent algorithms. But there is an open question as to how to implement them efficiently. Well, it turns out that there is a related concept called atomic variables.
+
+1. **Atomic Variables:**
+   - Atomic variables capture a restricted case of object-based isolation, implemented efficiently in hardware.
+   - They are a specialized mechanism for handling concurrent access to shared variables.
+
+2. **Example with Atomic Integer:**
+   - Consider an array of work items accessed by multiple threads, each picking up work from the array.
+   - Without proper synchronization, data races can occur in accessing the shared variable `Current`.
+   - Using `atomic integers`, like `AtomicInteger`, provides a high-level and efficient solution for atomic operations.
+
+3. **Atomic Integer Operations:**
+   - The `AtomicInteger` class provides methods like `getAndAdd` for atomic operations.
+   - `getAndAdd` performs an atomic read, increment, and return the previous value, ensuring thread safety.
+   - It eliminates the need for manually writing low-level code to handle synchronization.
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class WorkProcessor {
+    private static final AtomicInteger current = new AtomicInteger(0);
+    private static final int N = 10; // Number of work items
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 5; i++) {
+            new Thread(WorkProcessor::processWork).start();
+        }
+    }
+
+    public static void processWork() {
+        int j;
+        while (true) {
+            j = current.getAndAdd(1); // Atomic increment and get
+            if (j >= N) {
+                break;
+            }
+            // Process work item X[j]
+            System.out.println("Thread " + Thread.currentThread().getId() + " processed item X[" + j + "]");
+        }
+    }
+}
+
+
+```
+
+4. **Atomic References and Compare-and-Set:**
+   - Besides atomic integers, there are atomic references and operations like `compareAndSet`.
+   - `compareAndSet` is a pattern where a value is set if a certain condition (comparison) holds.
+   - The entire logic is executed atomically, making it a powerful and efficient construct.
+
+```java
+import java.util.concurrent.atomic.AtomicReference;
+
+public class Example {
+    private static class Node {
+        int data;
+        Node next;
+
+        Node(int data) {
+            this.data = data;
+        }
+    }
+
+    private static final AtomicReference<Node> head = new AtomicReference<>(null);
+
+    public static void main(String[] args) {
+        // Example usage of compare-and-set pattern
+        Node newNode = new Node(42);
+        Node expected = head.get(); // Expected value, can be null or a specific node
+        boolean success = head.compareAndSet(expected, newNode);
+        if (success) {
+            System.out.println("Node added successfully.");
+        } else {
+            System.out.println("Failed to add node.");
+        }
+    }
+}
+```
+
+5. **Isolated Sections Matching Atomic Patterns:**
+   - Object-based isolation in concurrent algorithms can be implemented efficiently using atomic variables.
+   - If the isolated sections of your code match the patterns of existing atomic variables, the code executes more efficiently.
+   - Examples include patterns like `getAndAdd` for atomic integers or `compareAndSet` for atomic references.
+
+6. **Efficiency of Atomic Variables:**
+   - Modern processors have special hardware support for efficient implementation of atomic patterns.
+   - Using atomic variables is a step above low-level approaches like locks, providing higher-level semantics and efficiency.
+
+7. **High-Level Semantics:**
+   - Atomic variables allow programmers to think logically in terms of high-level semantics, focusing on the algorithm's intent rather than low-level synchronization details.
+
+8. **Importance of Atomic Variables:**
+   - It's crucial to be aware of and use atomic variables when applicable in concurrent programming.
+   - They provide a more concise and efficient way to handle synchronization compared to traditional lock-based approaches.
+
+Understanding and leveraging atomic variables contribute to writing concurrent algorithms that are not only correct but also efficient and scalable.
+
+```java
+public class Main {
+    private final AtomicInteger counter = new AtomicInteger(0);
+
+    // Increment the shared counter using atomic getAndAdd operation
+    public void incrementCounter() {
+        int oldValue, newValue;
+        do {
+            // Atomic read of the current value
+            oldValue = counter.get();
+
+            // Increment the value atomically using getAndAdd
+            newValue = oldValue + 1;
+        } while (!counter.compareAndSet(oldValue, newValue));
+        // Continue looping until the update is successful (no concurrent modification)
+    }
+
+    public int getCounterValue() {
+        return counter.get();
+    }
+
+    public static void main(String[] args) {
+        Main example = new Main();
+
+        // Create multiple threads to increment the counter concurrently
+        Thread thread1 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                example.incrementCounter();
+            }
+        });
+
+        Thread thread2 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                example.incrementCounter();
+            }
+        });
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Final Counter Value: " + example.getCounterValue());
+    }
+}
+
+```
+

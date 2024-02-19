@@ -441,72 +441,72 @@ Sample implementation only for representation!
 [Credits](https://www.coursera.org/learn/concurrent-programming-in-java/supplement/4ULtn/mini-project-2-global-and-object-based-isolation)
 
 ```java
-    public static void isolated(Object obj1, Object obj2, Runnable runnable) {
-        Object[] objArr = new Object[]{obj1, obj2};
-        isolatedManager.acquireLocksFor(objArr);
+public static void isolated(Object obj1, Object obj2, Runnable runnable) {
+    Object[] objArr = new Object[]{obj1, obj2};
+    isolatedManager.acquireLocksFor(objArr);
 
-        try {
-            runnable.run();
-        } finally {
-            isolatedManager.releaseLocksFor(objArr);
+    try {
+        runnable.run();
+    } finally {
+        isolatedManager.releaseLocksFor(objArr);
+    }
+
+}
+
+public void acquireLocksFor(Object[] objects) {
+    TreeSet<Object> sorted = this.createSortedObjects(objects);
+    Iterator iterator = sorted.iterator();
+
+    while(iterator.hasNext()) {
+        Object obj = iterator.next();
+        int lockIndex = this.lockIndexFor(obj);
+        this.locks[lockIndex].lock();
+    }
+}
+
+public void releaseLocksFor(Object[] objects) {
+    TreeSet<Object> sorted = this.createSortedObjects(objects);
+    Iterator iterator = sorted.iterator();
+
+    while(iterator.hasNext()) {
+        Object obj = iterator.next();
+        int lockIndex = this.lockIndexFor(obj);
+        this.locks[lockIndex].unlock();
+    }
+
+}
+
+private int lockIndexFor(Object obj) {
+    return Math.abs(obj.hashCode()) % 64;
+}
+
+private TreeSet<Object> createSortedObjects(Object[] objects) {
+    TreeSet<Object> sorted = new TreeSet(new Comparator<Object>() {
+        public int compare(Object o1, Object o2) {
+            return IsolatedManager.this.lockIndexFor(o1) - IsolatedManager.this.lockIndexFor(o2);
         }
+    });
 
+    for(int i = 0; i < objects.length; ++i) {
+        Object obj = objects[i];
+        sorted.add(obj);
     }
 
-    public void acquireLocksFor(Object[] objects) {
-        TreeSet<Object> sorted = this.createSortedObjects(objects);
-        Iterator iterator = sorted.iterator();
+    return sorted;
+}
 
-        while(iterator.hasNext()) {
-            Object obj = iterator.next();
-            int lockIndex = this.lockIndexFor(obj);
-            this.locks[lockIndex].lock();
-        }
+public void acquireAllLocks() {
+    for(int i = 0; i < this.locks.length; ++i) {
+        this.locks[i].lock();
     }
 
-    public void releaseLocksFor(Object[] objects) {
-        TreeSet<Object> sorted = this.createSortedObjects(objects);
-        Iterator iterator = sorted.iterator();
+}
 
-        while(iterator.hasNext()) {
-            Object obj = iterator.next();
-            int lockIndex = this.lockIndexFor(obj);
-            this.locks[lockIndex].unlock();
-        }
-
+public void releaseAllLocks() {
+    for(int i = this.locks.length - 1; i >= 0; --i) {
+        this.locks[i].unlock();
     }
 
-    private int lockIndexFor(Object obj) {
-        return Math.abs(obj.hashCode()) % 64;
-    }
-
-    private TreeSet<Object> createSortedObjects(Object[] objects) {
-        TreeSet<Object> sorted = new TreeSet(new Comparator<Object>() {
-            public int compare(Object o1, Object o2) {
-                return IsolatedManager.this.lockIndexFor(o1) - IsolatedManager.this.lockIndexFor(o2);
-            }
-        });
-
-        for(int i = 0; i < objects.length; ++i) {
-            Object obj = objects[i];
-            sorted.add(obj);
-        }
-
-        return sorted;
-    }
-
-    public void acquireAllLocks() {
-        for(int i = 0; i < this.locks.length; ++i) {
-            this.locks[i].lock();
-        }
-
-    }
-
-    public void releaseAllLocks() {
-        for(int i = this.locks.length - 1; i >= 0; --i) {
-            this.locks[i].unlock();
-        }
-
-    }
+}
 ```
 

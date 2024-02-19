@@ -181,7 +181,6 @@ This ensures that Threads 1 and 2 cannot access the synchronized section at the 
 - The `synchronized` keyword is used to declare that a block of code or a method requires the lock on the object's monitor for exclusive access.
 - Monitors are applied at the object level, not at the method level.
 - It's crucial for managing shared resources and preventing race conditions in multithreaded environments.
-```
 
 ### Concurrent Spanning Tree Algorithm
 

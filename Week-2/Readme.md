@@ -361,3 +361,70 @@ public class Main {
 
 ```
 
+## Read, Write Isolation
+
+Say you have a Map, and multiple threads want to read and write to the hash map.
+
+1. **Basic Concurrent Collection Operations:**
+   
+   ```java
+   // Assume you have a concurrent collection, e.g., a HashMap
+   Map<K, V> map = new Map<>();
+
+   // Thread T1 performing GET operations
+   V value1 = map.get(K1);
+   V value2 = map.get(K3);
+   // ...
+
+   // Thread T2 performing GET operations
+   V value3 = map.get(K2);
+   V value4 = map.get(K4);
+   // ...
+
+   // Thread T3 performing PUT operation
+   map.put(K0, V0);
+   ```
+
+We can `isolate` the `map` object to guarantee correctness.
+2. **Object-Based Isolation:**
+
+   ```java
+   // Applying isolated for both GET and PUT
+   // T1 and T2 GET operations are isolated
+   V value1 = isolate (map) { map.get(K1); }
+   V value2 = isolate (map) { map.get(K3); }
+   // ...
+
+   // T3 PUT operation is isolated
+   isolate (map) { map.put(K0, V0); }
+   ```
+
+3. **Read-Write Object-Based Isolation:**
+
+But, we can optimize the reads, because they can be concurrent, and apply mutual exclusion to only writes.
+   ```java
+   // Applying isolated for both GET and PUT
+   // T1 and T2 GET operations are isolated
+   V value1 = isolate (read(map)) { map.get(K1); }
+   V value2 = isolate (read(map)) { map.get(K3); }
+   // ...
+
+   // T3 PUT operation is isolated
+   isolate (write(map)) { map.put(K0, V0); }
+   ```
+This gives us much higher concurrency.
+
+4. **Further Refinement with Read-Write Isolation:**
+
+In our Doubly LL example, we had:
+
+```
+deleteNode(cur) {
+    isolated(cur, cur.prev, cur.next, () -> {
+        . . . // Body of object-based isolated construct
+    });
+}
+```
+Note that, in this case, no write operations are being performed on `cur`. Therefore, `cur` can run with Read isolation to increase concurrency.
+
+This Java code showcases the use of `synchronized` blocks to achieve object-based isolation and further refinement with read-write isolation, ensuring correct concurrent access to collections and maintaining data integrity.

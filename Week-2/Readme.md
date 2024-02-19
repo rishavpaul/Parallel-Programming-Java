@@ -10,14 +10,14 @@ Consider a scenario involving a shared bank account where money transfers occur 
 
 ```java
 // Thread T1
-isolate {
+{
     // critical section for T1
     family.balance += 100;
     parent.balance -= 100;
 }
 
 // Thread T2
-isolate {
+{
     // critical section for T2
     family.balance -= 100;
     daughter.balance += 100;

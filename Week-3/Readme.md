@@ -1,4 +1,4 @@
-**Actors in Concurrent Programming: A Comprehensive Overview**
+## Actors in Concurrent Programming: A Comprehensive Overview**
 
 *Introduction:*
 Concurrent programming has advanced beyond traditional synchronization mechanisms, introducing higher-level abstractions to simplify development. One notable model is the Actor Model, providing an even more abstract and effective approach to concurrency control. In this summary, we delve into the core concepts of actors, their structure, and the principles of message passing.
